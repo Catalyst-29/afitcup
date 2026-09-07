@@ -752,3 +752,7 @@ html:has(.admin-dashboard-shell),body:has(.admin-dashboard-shell){width:100%;hei
 /* Prevent the position cards from overlapping the squad overview */
 .department-shell.section-review .review-position-summary{height:auto!important;min-height:max-content!important;flex:0 0 auto!important;display:block!important;padding-bottom:10px!important;overflow:visible!important}.department-shell.section-review .review-position-summary>div{min-height:165px!important}.department-shell.section-review .review-player-groups{position:relative!important;clear:both!important;margin-top:8px!important}
 @media(max-width:620px){.department-shell.section-review .review-position-summary{padding-bottom:7px!important}.department-shell.section-review .review-position-summary>div{min-height:118px!important}.department-shell.section-review .review-player-groups{margin-top:5px!important}}
+
+/* Team Summary approval badge */
+.review-team-card .status-approved{gap:6px;padding:6px 11px;border:0;border-radius:999px;background:#07883d;color:#fff;box-shadow:0 4px 10px rgba(7,136,61,.18);font-size:9px;letter-spacing:.02em}.review-team-card .status-approved>span{display:none}.review-team-card .status-approved:before{content:"✓";width:15px;height:15px;display:grid;place-items:center;border-radius:50%;background:#fff;color:#07883d;font-size:10px;font-weight:950}
+@media(max-width:620px){.review-team-card .status-approved{padding:5px 9px;font-size:8px}.review-team-card .status-approved:before{width:13px;height:13px;font-size:8px}}

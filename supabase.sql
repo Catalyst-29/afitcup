@@ -5,8 +5,12 @@ create table if not exists public.departments (
   id uuid primary key default gen_random_uuid(),
   token text not null unique,
   name text not null unique,
+  is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+-- Safe migration for projects where the departments table already exists.
+alter table public.departments add column if not exists is_active boolean not null default true;
 
 create table if not exists public.teams (
   id uuid primary key default gen_random_uuid(),
@@ -79,6 +83,12 @@ insert into public.departments(token,name) values
 ('JAY-3582', 'Jayblack FC'),
 ('AYO-6073', 'Ayorinde FC')
 on conflict (token) do update set name=excluded.name;
+
+-- Deactivated registration tokens retain their existing teams and player data,
+-- but can no longer be used to sign in.
+update public.departments
+set is_active = false
+where token in ('TKN-4827','RID-7314','JOE-2659','FIZ-9146','JAY-3582','AYO-6073');
 
 insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
 values ('competition-files','competition-files',false,5242880,array['image/png','image/jpeg'])
