@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 const TEAM_COOKIE = 'competition_team';
 const ADMIN_COOKIE = 'competition_admin';
 const RULES_COOKIE = 'competition_rules_accepted';
+const LONG_LIVED_SESSION_SECONDS = 60 * 60 * 24 * 400;
 
 function secret() {
   const s = process.env.APP_SESSION_SECRET;
@@ -27,7 +28,7 @@ function verify(raw?: string) {
 
 export async function setTeamSession(departmentId: string) {
   const store = await cookies();
-  store.set(TEAM_COOKIE, token(departmentId), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 60 * 60 * 24 * 14 });
+  store.set(TEAM_COOKIE, token(departmentId), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: LONG_LIVED_SESSION_SECONDS });
 }
 export async function getTeamSession() { return verify((await cookies()).get(TEAM_COOKIE)?.value); }
 export async function setRulesAccepted(departmentId: string) {
