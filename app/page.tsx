@@ -70,7 +70,7 @@ export default function Home() {
         <input id="department-token" name="token" value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder="AFIT-X7Q9" autoCapitalize="characters" autoComplete="off" aria-describedby={error ? 'token-error' : undefined} aria-invalid={Boolean(error)}/>
         <button type="submit" disabled={loading}><span>{loading ? 'VERIFYING TOKEN…' : 'CONTINUE TO REGISTRATION'}</span><ArrowRight aria-hidden="true"/></button>
         <p className="cup-secure"><LockKeyhole aria-hidden="true"/> Secure access. Your data is protected.</p>
-        <div className="cup-deadline"><CalendarDays aria-hidden="true"/><span><small>REGISTRATION CLOSES</small><b>30 SEP 2026</b></span></div>
+        <div className="cup-deadline"><CalendarDays aria-hidden="true"/><span><small>REGISTRATION CLOSES</small><b>30 OCT 2026</b></span></div>
         <div id="token-error" className={`cup-error${error ? ' visible' : ''}`} role="alert" aria-live="polite">{error}</div>
       </form>
 
