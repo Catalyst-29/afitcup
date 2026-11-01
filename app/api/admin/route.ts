@@ -23,11 +23,9 @@ export async function PATCH(req: Request) {
     if (!team) return NextResponse.json({ error: 'Team not found.' }, { status: 404 });
     if (!team.final_submitted) return NextResponse.json({ error: 'This team has not submitted its registration for review.' }, { status: 403 });
   } else {
-    const { data: player, error: playerError } = await sb.from('players').select('teams!inner(final_submitted)').eq('id', body.id).maybeSingle();
+    const { data: player, error: playerError } = await sb.from('players').select('team_id').eq('id', body.id).maybeSingle();
     if (playerError) return NextResponse.json({ error: playerError.message }, { status: 500 });
     if (!player) return NextResponse.json({ error: 'Player not found.' }, { status: 404 });
-    const playerTeam = Array.isArray(player.teams) ? player.teams[0] : player.teams;
-    if (!playerTeam?.final_submitted) return NextResponse.json({ error: 'This player’s team has not submitted its registration for review.' }, { status: 403 });
   }
 
   if (table === 'teams' && status.data === 'approved') {

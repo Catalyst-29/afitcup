@@ -41,7 +41,7 @@ export default function AdminClient({ authenticated, teams }: { authenticated: b
   }, [approvalPlayer]);
 
   const visibleDepartments = useMemo(
-    () => departments.filter((team) => team.departments.name.toLowerCase().includes(query.trim().toLowerCase()) && (activeView !== 'approvals' || (team.final_submitted && (effectiveTeamStatus(team) === 'pending' || team.players.some((player: any) => player.status === 'pending'))))).sort((a, b) => a.departments.name.localeCompare(b.departments.name)),
+    () => departments.filter((team) => team.departments.name.toLowerCase().includes(query.trim().toLowerCase()) && (activeView !== 'approvals' || (team.final_submitted && effectiveTeamStatus(team) === 'pending') || team.players.some((player: any) => player.status === 'pending'))).sort((a, b) => a.departments.name.localeCompare(b.departments.name)),
     [departments, query, activeView],
   );
   const selected = departments.find((team) => team.id === selectedId) || null;
@@ -73,7 +73,7 @@ export default function AdminClient({ authenticated, teams }: { authenticated: b
     { label: 'Midfielders', position: 'Midfielder', color: '#7651b8', Icon: Shirt },
     { label: 'Attackers', position: 'Forward', color: '#ef2929', Icon: Footprints },
   ].map((group) => { const players = allPlayers.filter((player: any) => player.position === group.position); return { ...group, players, approved: players.filter((player: any) => player.status === 'approved').length, pending: players.filter((player: any) => player.status === 'pending').length, rejected: players.filter((player: any) => player.status === 'rejected').length }; });
-  const pendingPlayerRows = departments.filter((team)=>team.final_submitted).flatMap((team) => team.players.filter((player:any)=>player.status==='pending').map((player:any)=>({...player,departmentName:team.departments.name,departmentLogo:team.logo_url,teamId:team.id}))).filter((player:any)=>{const search=query.trim().toLowerCase();return !search||`${player.first_name} ${player.last_name} ${player.departmentName}`.toLowerCase().includes(search);}).sort((a:any,b:any)=>a.departmentName.localeCompare(b.departmentName)||Number(a.jersey_number)-Number(b.jersey_number));
+  const pendingPlayerRows = departments.flatMap((team) => team.players.filter((player:any)=>player.status==='pending').map((player:any)=>({...player,departmentName:team.departments.name,departmentLogo:team.logo_url,teamId:team.id}))).filter((player:any)=>{const search=query.trim().toLowerCase();return !search||`${player.first_name} ${player.last_name} ${player.departmentName}`.toLowerCase().includes(search);}).sort((a:any,b:any)=>a.departmentName.localeCompare(b.departmentName)||Number(a.jersey_number)-Number(b.jersey_number));
   const pendingTeamRows = departments.filter((team)=>team.final_submitted&&effectiveTeamStatus(team)==='pending').sort((a,b)=>a.departments.name.localeCompare(b.departments.name));
 
   async function login(event: React.FormEvent<HTMLFormElement>) {
