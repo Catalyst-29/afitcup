@@ -26,6 +26,10 @@ export async function PATCH(req: Request) {
     const { data: player, error: playerError } = await sb.from('players').select('team_id').eq('id', body.id).maybeSingle();
     if (playerError) return NextResponse.json({ error: playerError.message }, { status: 500 });
     if (!player) return NextResponse.json({ error: 'Player not found.' }, { status: 404 });
+    const { data: team, error: teamError } = await sb.from('teams').select('status').eq('id', player.team_id).maybeSingle();
+    if (teamError) return NextResponse.json({ error: teamError.message }, { status: 500 });
+    if (!team) return NextResponse.json({ error: 'Team not found.' }, { status: 404 });
+    if (team.status === 'approved') return NextResponse.json({ error: 'This team has already been finalized. Player decisions can no longer be changed.' }, { status: 403 });
   }
 
   if (table === 'teams' && status.data === 'approved') {
@@ -43,13 +47,12 @@ export async function PATCH(req: Request) {
     .from(table)
     .update(payload)
     .eq('id', body.id)
-    .eq('status', 'pending')
     .select()
     .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!updated) {
-    return NextResponse.json({ error: 'This item has already been reviewed.' }, { status: 409 });
+    return NextResponse.json({ error: 'This item is no longer available for review.' }, { status: 409 });
   }
 
   if (table === 'players' && updated.team_id) {
