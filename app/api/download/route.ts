@@ -5,6 +5,9 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { GET as generatePlayerCard } from '../player-card/route';
 
 export const runtime = 'nodejs';
+// A complete team export can include 25 photos and 25 generated player cards.
+// Keep this above the default serverless request duration where the host supports it.
+export const maxDuration = 60;
 
 function csvCell(value: unknown) {
   const text = String(value ?? '');
@@ -13,6 +16,17 @@ function csvCell(value: unknown) {
 
 function safeName(value: unknown) {
   return String(value ?? '').trim().replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '') || 'unknown';
+}
+
+async function runWithConcurrency<T>(items: T[], limit: number, work: (item: T) => Promise<void>) {
+  let nextIndex = 0;
+  const worker = async () => {
+    while (nextIndex < items.length) {
+      const item = items[nextIndex++];
+      await work(item);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
 export async function GET(req: Request) {
@@ -43,16 +57,20 @@ export async function GET(req: Request) {
   const photosFolder = zip.folder('player-photos');
   const informationFolder = zip.folder('registered-player-information');
   const headers = ['Player ID', 'First Name', 'Last Name', 'Nationality', 'Date of Birth', 'Jersey Number', 'Position', 'Height (cm)', 'Preferred Foot', 'Status', 'Rejection Reason', 'Registered At', 'Photo Filename', 'Card Filename'];
-  const rows: string[] = [];
+  const rows = registeredPlayers.map((player) => [
+    player.id, player.first_name, player.last_name, player.nationality, player.date_of_birth,
+    player.jersey_number, player.position, player.height_cm, player.preferred_foot, player.status,
+    player.rejection_reason || '', player.created_at,
+    `${String(player.jersey_number).padStart(2, '0')}-${safeName(player.first_name)}-${safeName(player.last_name)}.${String(player.photo_path).toLowerCase().endsWith('.png') ? 'png' : 'jpg'}`,
+    `${String(player.jersey_number).padStart(2, '0')}-${safeName(player.first_name)}-${safeName(player.last_name)}-player-card.png`,
+  ].map(csvCell).join(','));
   const notes: string[] = [];
 
-  for (const player of registeredPlayers) {
+  await runWithConcurrency(registeredPlayers, 4, async (player) => {
     const baseName = `${String(player.jersey_number).padStart(2, '0')}-${safeName(player.first_name)}-${safeName(player.last_name)}`;
     const extension = String(player.photo_path).toLowerCase().endsWith('.png') ? 'png' : 'jpg';
     const photoFilename = `${baseName}.${extension}`;
     const cardFilename = `${baseName}-player-card.png`;
-    rows.push([player.id,player.first_name,player.last_name,player.nationality,player.date_of_birth,player.jersey_number,player.position,player.height_cm,player.preferred_foot,player.status,player.rejection_reason||'',player.created_at,photoFilename,cardFilename].map(csvCell).join(','));
-
     informationFolder?.file(`${baseName}.txt`, [
       `Player ID: ${player.id}`,
       `Name: ${player.first_name} ${player.last_name}`,
@@ -76,7 +94,7 @@ export async function GET(req: Request) {
     const cardResponse = await generatePlayerCard(new Request(cardUrl, { headers: req.headers }));
     if (cardResponse.ok) cardsFolder?.file(cardFilename, Buffer.from(await cardResponse.arrayBuffer()));
     else notes.push(`${player.first_name} ${player.last_name}: player card could not be generated`);
-  }
+  });
 
   informationFolder?.file('all-registered-players.csv', [headers.map(csvCell).join(','), ...rows].join('\r\n'));
   informationFolder?.file('README.txt', `${departmentName}\r\nRegistered player information export\r\n\r\nRegistered players: ${registeredPlayers.length}\r\nGenerated: ${new Date().toISOString()}\r\n${notes.length ? `\r\nExport notes:\r\n${notes.join('\r\n')}` : ''}`);

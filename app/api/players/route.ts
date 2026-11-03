@@ -11,9 +11,8 @@ export async function POST(req: Request){
 export async function PATCH(req: Request){
  const departmentId=await getTeamSession(); if(!departmentId)return NextResponse.json({error:'Session expired.'},{status:401});
  const form=await req.formData(); const id=String(form.get('id')||''); const sb=supabaseAdmin();
- const {data:player}=await sb.from('players').select('*,teams!inner(department_id,final_submitted)').eq('id',id).maybeSingle();
+ const {data:player}=await sb.from('players').select('*,teams!inner(department_id)').eq('id',id).maybeSingle();
  if(!player||player.teams.department_id!==departmentId)return NextResponse.json({error:'Player not found.'},{status:404});
- if(player.teams.final_submitted||player.status==='approved')return NextResponse.json({error:'This player cannot be edited.'},{status:403});
  const parsed=playerSchema.safeParse(Object.fromEntries(['first_name','last_name','date_of_birth','jersey_number','position','height_cm','preferred_foot'].map(k=>[k,form.get(k)])));
  if(!parsed.success)return NextResponse.json({error:parsed.error.issues[0]?.message||'Invalid player details.'},{status:400});
  const duplicate=await sb.from('players').select('id').eq('team_id',player.team_id).eq('jersey_number',parsed.data.jersey_number).neq('id',id).maybeSingle();

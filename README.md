@@ -61,7 +61,7 @@ Admin dashboard: `http://localhost:3000/admin`.
 - Team/player statuses are `pending`, `approved`, or `rejected`.
 - Admin decisions appear when the team dashboard reloads.
 - Approved players cannot be removed by the team.
-- Final submission locks team-side edits.
+- Final submission prevents adding or removing players. Existing player details may still be corrected; a correction returns that player to pending review.
 
 ## Image downloads
 Photos and logos remain stored privately in the Supabase `competition-files` bucket. The admin interface displays them using temporary signed URLs. The CSV download contains player records, and every player card in the admin dashboard includes a **Photo** button that downloads the stored JPEG. Supabase Storage also keeps files grouped under each department UUID folder for backup/export.
