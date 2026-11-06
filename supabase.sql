@@ -19,10 +19,13 @@ create table if not exists public.teams (
   status text not null default 'pending' check (status in ('pending','approved','rejected')),
   rejection_reason text,
   final_submitted boolean not null default false,
+  force_submitted boolean not null default false,
   submitted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.teams add column if not exists force_submitted boolean not null default false;
 
 create table if not exists public.players (
   id uuid primary key default gen_random_uuid(),
@@ -37,11 +40,18 @@ create table if not exists public.players (
   height_cm integer not null check (height_cm between 140 and 240),
   preferred_foot text not null check (preferred_foot in ('Right','Left')),
   status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  included_in_final_submission boolean not null default false,
   rejection_reason text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint unique_jersey_per_team unique(team_id, jersey_number)
 );
+
+alter table public.players add column if not exists included_in_final_submission boolean not null default false;
+
+-- Preserve the composition of registrations that were submitted before this field was introduced.
+update public.players set included_in_final_submission = true
+where team_id in (select id from public.teams where final_submitted = true and force_submitted = false);
 
 -- Hard database guard: never allow more than 25 players on a team.
 create or replace function public.enforce_player_limit() returns trigger language plpgsql as $$

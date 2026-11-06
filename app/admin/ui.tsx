@@ -117,6 +117,30 @@ export default function AdminClient({ authenticated, teams }: { authenticated: b
     }
   }
 
+  async function forceSubmit(team: any) {
+    const playerCount = team.players.length;
+    if (!confirm(`Force-submit ${team.departments.name} with its current ${playerCount} registered player${playerCount === 1 ? '' : 's'} for review? This bypasses the 20-player minimum.`)) return;
+    setError('');
+    setReviewing(team.id);
+    try {
+      const response = await fetch('/api/admin/force-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId: team.id }),
+      });
+      const result = await response.json();
+      if (!response.ok) { setError(result.error); return; }
+      setDepartments((current) => current.map((item) => item.id === team.id
+        ? { ...item, final_submitted: true, submitted_at: new Date().toISOString(), status: 'pending', rejection_reason: null }
+        : item));
+      router.refresh();
+    } catch {
+      setError('Unable to force-submit this registration. Please try again.');
+    } finally {
+      setReviewing(null);
+    }
+  }
+
   async function logout() { if (!confirm('Are you sure you want to log out of the admin dashboard?')) return; await fetch('/api/admin-logout', { method: 'POST' }); router.refresh(); }
 
   if (!authenticated) return (
@@ -156,7 +180,7 @@ export default function AdminClient({ authenticated, teams }: { authenticated: b
                 <div className="team-review-head">{selected.logo_url && <img src={selected.logo_url} alt={`${selected.departments.name} logo`} />}<div><div className="kicker">Department registration</div><h2>{selected.departments.name}</h2><div className="meta">{selected.players.length}/25 registered players</div></div><Status value={effectiveTeamStatus(selected)} /></div>
                 {selected.rejection_reason && <div className="reason">Team decision: {selected.rejection_reason}</div>}
                 <div className="actions team-review-actions">
-                  {!selected.final_submitted?<div className="review-notice">This team has not submitted its registration. Approval actions are unavailable.</div>:effectiveTeamStatus(selected) === 'pending' && <><button className="btn tiny" title={selected.players.every((player: any) => player.status === 'approved') ? '' : 'Approve every player first'} disabled={reviewing === selected.id || selected.players.length === 0 || !selected.players.every((player: any) => player.status === 'approved')} onClick={() => decide('team', selected.id, 'approved')}>Approve team</button><button className="btn danger tiny" disabled={reviewing === selected.id} onClick={() => decide('team', selected.id, 'rejected')}>Reject team</button><input className="input" placeholder="Team rejection reason" value={reason[selected.id] || ''} onChange={(event) => setReason({ ...reason, [selected.id]: event.target.value })} /></>}
+                  {!selected.final_submitted ? <><div className="review-notice">This team has not submitted its registration. Force-submit its current squad to begin review without the 20-player minimum.</div><button className="btn tiny" disabled={reviewing === selected.id || selected.players.length === 0} onClick={() => forceSubmit(selected)}>{reviewing === selected.id ? 'Submitting...' : `Force submit ${selected.players.length} player${selected.players.length === 1 ? '' : 's'} for review`}</button></> : effectiveTeamStatus(selected) === 'pending' && <><button className="btn tiny" title={selected.players.every((player: any) => player.status === 'approved') ? '' : 'Approve every player first'} disabled={reviewing === selected.id || selected.players.length === 0 || !selected.players.every((player: any) => player.status === 'approved')} onClick={() => decide('team', selected.id, 'approved')}>Approve team</button><button className="btn danger tiny" disabled={reviewing === selected.id} onClick={() => decide('team', selected.id, 'rejected')}>Reject team</button><input className="input" placeholder="Team rejection reason" value={reason[selected.id] || ''} onChange={(event) => setReason({ ...reason, [selected.id]: event.target.value })} /></>}
                   <a className="btn secondary tiny" href={`/api/download?team=${selected.id}`}><Download size={14} /> Download information</a>
                 </div>
               </section>

@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/cron/force-submit", "schedule": "15 7 6 11 *" }
+  ]
+}

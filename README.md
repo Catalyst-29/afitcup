@@ -37,6 +37,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
 APP_SESSION_SECRET=use-a-long-random-secret-at-least-32-characters
 ADMIN_PASSWORD=choose-a-strong-admin-password
+CRON_SECRET=use-a-long-random-secret-for-the-scheduled-force-submission
 ```
 
 Then:
@@ -62,6 +63,7 @@ Admin dashboard: `http://localhost:3000/admin`.
 - Admin decisions appear when the team dashboard reloads.
 - Approved players cannot be removed by the team.
 - Final submission prevents adding or removing players. Existing player details may still be corrected; a correction returns that player to pending review.
+- On 6 November 2026 at 08:15 WAT, Vercel Cron force-submits each unsubmitted department that has approved players. Only approved players are included; pending and rejected players remain excluded.
 
 ## Image downloads
 Photos and logos remain stored privately in the Supabase `competition-files` bucket. The admin interface displays them using temporary signed URLs. The CSV download contains player records, and every player card in the admin dashboard includes a **Photo** button that downloads the stored JPEG. Supabase Storage also keeps files grouped under each department UUID folder for backup/export.
